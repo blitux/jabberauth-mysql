@@ -1,0 +1,32 @@
+body {
+    font-size: 100%;
+    font-family: sans-serif;
+}
+label {
+    display: block;
+    margin: 5px 0;
+    font-size: 10pt; font-weight: bold;
+}
+span.field{
+    font-size: 10pt;
+}
+
+span.field > input[type=text] {
+    margin-left: 5px;
+}
+
+input[type=text], input[type=password] {
+    border: 1px solid #888;
+    padding: 4px;
+}
+
+.hidden{
+    display: none;
+}
+
+.inline-error{
+    margin-left: 5px;
+    color: #A00;
+    font-size: 8pt;
+    font-weight: bold;
+}
