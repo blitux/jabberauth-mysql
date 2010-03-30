@@ -1,0 +1,43 @@
+
+Sistema de Autenticación para ejabberd usando MySQL
+
+
+1) Ajustar la configuracion de ejabberd:
+
+{auth_method, external}.
+{extauth_program, "/path/to/ejabberd-extauth.py"}.
+
+1.1) Ajustar la configuracion para la conexion con MySQL en ejabberd-extauth.py
+
+2) Ejecutar el siguiente script SQL
+
+-- Adminer 2.3.0 dump
+SET NAMES utf8;
+SET foreign_key_checks = 0;
+SET time_zone = 'SYSTEM';
+SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
+
+CREATE DATABASE `jabber` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `jabber`;
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `prefs` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `last_login` datetime NOT NULL,
+  `remember` varchar(50) NOT NULL,
+  `remember_expires` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+
+-- End
+
+3) Colocar los parametros correspondientes para la conexion con MySQL en el archivo functions.php
+
+
+4) Ejecutar el script para registrar usuarios: register.php
+
+5) Profit ;)
