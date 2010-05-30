@@ -5,6 +5,7 @@ import sys
 import logging
 from hashlib import sha256
 from struct import pack
+from struct import unpack
 import MySQLdb
 
 # Config
@@ -17,13 +18,13 @@ import MySQLdb
 error_log_file = '/var/log/ejabberd/extauth.err.log'
 logformat = '%(asctime)s %(levelname)s %(message)s'
 logfile = '/var/log/ejabberd/extauth.log'
-domain  = '@localhost'
+loglevel = logging.DEBUG
+domain  = '@domain'
 
-dbuser = 'dbusr'
-dbpass = 'dbpwd'
+dbuser = 'db_user'
+dbpass = 'db_password'
 dbhost = 'localhost'
 dbname = 'jabber'
-
 
 
 class EjabberdInputError(Exception):
@@ -38,16 +39,33 @@ def log_result(op, in_user, bool):
     else:
         logging.info("%s unsuccessful for %s"%(op, in_user))
 
+def db_connect():
+    try:
+        database=MySQLdb.connect(dbhost, dbuser, dbpass, dbname)
+    except:
+        logging.debug("Unable to initialize database, check settings!")
+        return False
+    return (database.cursor(),database)
+
+
+def db_close(dbcur,database):
+    dbcur.close()
+    database.close()
+
 def query_user(user):
+    dbcur,database = db_connect()
     dbcur.execute("SELECT username,password,prefs FROM users WHERE username ='%s'" % user)
-    return dbcur.fetchone()
+    register = dbcur.fetchone()
+    dbcur.close()
+    database.close()
+    return register
 
 def query(query):
     dbcur.execute(query)
     dbcur.fetchone()
 
 
-# Function get_login_data()
+# Function get_auth_data()
 # Function to get data from ejabberd, from stdin
 #
 # @params void
@@ -65,7 +83,7 @@ def get_auth_data():
         raise EjabberdInputError('ERROR: Wrong input from ejabberd @ ejabberd_read()')
 
     logging.debug('Got 2 bytes from stdin: %s' % input_len)
-    (size,) = unpack('>h',input_len)
+    (size,) = unpack('>h', input_len)
     logging.debug('Size of input: %i' % size)
     data = sys.stdin.read(size).split(':')
     logging.debug('Data from ejabberd: %s' % data)
@@ -92,11 +110,10 @@ def isuser(user,host):
     return_value = False
     userdata = query_user(user)
     if userdata == None:
-        logging.debug('Wrong username: %s' % user)
+        logging.info('Wrong username: %s' % user)
         return_value = False
     elif user+"@"+host == userdata[0]+domain:
         return_value = True
-
     return return_value
 
 def auth(user,host,password):
@@ -104,28 +121,24 @@ def auth(user,host,password):
     data = query_user(user)
 
     if data == None:
-        logging.debug('Wrong username: %s' % user)
+        logging.info('Wrong username: %s' % user)
         return_value = False
     elif user+"@"+host == data[0]+domain:
         if sha256(data[2]+':'+user+':'+password).hexdigest() == data[1]:
-            logging.debug('Authentication Granted for user: %s' % user)
+            logging.info('Authentication Granted for user: %s' % user)
             return_value = True
         else:
-            logging.debug('Authentication Denied for user: %s' % user)
-            return_value = False
+            logging.info('Authentication Denied for user: %s' % user)
+            return_value = True
     else:
+        logging.info('Authentication Denied for user: not none %s' % domain )
         return_value = False
 
     return return_value
 
 
 sys.stderr = open(logfile,'a')
-logging.basicConfig(level=logging.DEBUG,format=logformat,filename=logfile,filemode='a')
-try:
-    database=MySQLdb.connect(dbhost, dbuser, dbpass, dbname)
-except:
-    logging.debug("Unable to initialize database, check settings!")
-dbcur=database.cursor()
+logging.basicConfig(level=loglevel,format=logformat,filename=logfile,filemode='a')
 
 logging.info('extauth script started')
 
@@ -144,17 +157,12 @@ while True:
 
     if request[0] == 'auth':
         op_result = auth(request[1], request[2], request[3])
-        return_op_result(op_result)
-        log_result(request[0], request[1], op_result)
 
     elif request[0] == 'isuser':
         op_result = isuser(request[1], request[2])
-        return_op_result(op_result)
-        log_result(request[0], request[1], op_result)
 
     elif request[0] == 'setpass':
         op_result=False
-        return_op_result(op_result)
-        log_result(request[0], request[1], op_result)
 
-
+    return_op_result(op_result)
+    log_result(request[0], request[1], op_result)
