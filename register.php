@@ -31,7 +31,7 @@
         <span id="errors_confirmation" class="inline-error"><?php @print $errors['confirmation'] ?></span>
       </p>
       <p>
-        <label for="email">Email</label>
+        <label for="email">Email (no obligatorio)</label>
         <input type="text" name="email" value="<?php @print $_SESSION['formdata']['email'] ?>" />
         <span id="errors_email" class="inline-error"><?php @print $errors['email'] ?></span>
       </p>

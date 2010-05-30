@@ -205,7 +205,7 @@ class JabberAuth {
             $safe_email = htmlentities($this->post['email']);
             if($this->validate_email_address($safe_email,FALSE)) return $safe_email;
             else return FALSE;
-        } return FALSE;
+        } return '';
     }
 
     function validate_captcha(){
@@ -236,7 +236,7 @@ class JabberAuth {
                     $errmsg['confirmation'] = ERROR_PASSWORDS;
                 }
                 $email = $this->validate_email();
-                if(!$email){
+                if($email === FALSE){
                     $errmsg['email'] = ERROR_EMAIL;
                 } else $email = strtolower($email);
                 $results = array(
